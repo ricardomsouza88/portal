@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Portal de PDFs</title>
+
+<style>
+body { font-family: Arial; background: #f5f5f5; text-align: center; padding: 30px; }
+
+#busca {
+  padding: 10px;
+  width: 400px;
+  margin-bottom: 10px;
+}
+
+#btnAdicionar {
+  padding: 10px;
+  background: green;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.card {
+  background: #fff;
+  padding: 15px;
+  margin: 10px auto;
+  max-width: 600px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.pagination { margin-top: 20px; }
+
+.page-btn {
+  padding: 5px 10px;
+  margin: 3px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.page-btn.active {
+  background: #ccc;
+}
+
+/* Modal */
+#modal {
+  display: none;
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
+}
+
+#modalContent {
+  background:#fff;
+  padding:20px;
+  margin:100px auto;
+  width:300px;
+}
+
+input, textarea {
+  width:100%;
+  margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📄 Portal de PDFs</h1>
+
+<input type="text" id="busca" placeholder="Pesquisar...">
+<button id="btnAdicionar">+ Incluir</button>
+
+<div id="lista"></div>
+<div id="pagination" class="pagination"></div>
+
+<!-- Modal -->
+<div id="modal">
+  <div id="modalContent">
+    <h3>Novo PDF</h3>
+    <input type="text" id="titulo" placeholder="Título">
+    <textarea id="descricao" placeholder="Descrição"></textarea>
+    <input type="file" id="arquivo" accept="application/pdf">
+    <button id="salvarBtn">Salvar</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "pdfs_salvos";
+
+// =========================
+// Dados
+// =========================
+let dados = [];
+let dadosFiltrados = [];
+
+const lista = document.getElementById("lista");
+const busca = document.getElementById("busca");
+const modal = document.getElementById("modal");
+
+const itensPorPagina = 5;
+let paginaAtual = 1;
+
+// =========================
+// LocalStorage
+// =========================
+function salvarLocal() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
+}
+
+function carregarLocal() {
+  const salvo = localStorage.getItem(STORAGE_KEY);
+  if (salvo) {
+    dados = JSON.parse(salvo);
+  }
+}
+
+// =========================
+// Base64
+// =========================
+function arquivoParaBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// =========================
+// Modal
+// =========================
+document.getElementById("btnAdicionar").onclick = () => {
+  modal.style.display = "block";
+};
+
+modal.onclick = (e) => {
+  if (e.target === modal) modal.style.display = "none";
+};
+
+// =========================
+// Salvar
+// =========================
+document.getElementById("salvarBtn").onclick = async () => {
+
+  const titulo = document.getElementById("titulo").value;
+  const descricao = document.getElementById("descricao").value;
+  const arquivoInput = document.getElementById("arquivo");
+
+  if (!titulo || !descricao || !arquivoInput.files[0]) {
+    alert("Preencha tudo!");
+    return;
+  }
+
+  const base64 = await arquivoParaBase64(arquivoInput.files[0]);
+
+  dados.push({
+    titulo,
+    descricao,
+    arquivo: base64
+  });
+
+  salvarLocal();
+
+  dadosFiltrados = [...dados];
+  paginaAtual = 1;
+  mostrar();
+
+  modal.style.display = "none";
+
+  // limpar
+  document.getElementById("titulo").value = "";
+  document.getElementById("descricao").value = "";
+  arquivoInput.value = "";
+};
+
+// =========================
+// Mostrar lista
+// =========================
+function mostrar() {
+  lista.innerHTML = "";
+
+  const inicio = (paginaAtual - 1) * itensPorPagina;
+  const itens = dadosFiltrados.slice(inicio, inicio + itensPorPagina);
+
+  itens.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `<h3>${item.titulo}</h3><p>${item.descricao}</p>`;
+  div.onclick = () => {
+  const win = window.open();
+  win.document.write(`
+    <iframe src="${item.arquivo}" 
+    style="width:100%; height:100%; border:none;"></iframe>
+  `);
+};
+
+  // paginação
+  const total = Math.ceil(dadosFiltrados.length / itensPorPagina);
+  const pag = document.getElementById("pagination");
+  pag.innerHTML = "";
+
+  for (let i = 1; i <= total; i++) {
+    const btn = document.createElement("span");
+    btn.className = "page-btn" + (i === paginaAtual ? " active" : "");
+    btn.innerText = i;
+    btn.onclick = () => {
+      paginaAtual = i;
+      mostrar();
+    };
+    pag.appendChild(btn);
+  }
+}
+
+// =========================
+// Busca
+// =========================
+busca.addEventListener("input", () => {
+  const termo = busca.value.toLowerCase();
+
+  dadosFiltrados = dados.filter(item =>
+    item.titulo.toLowerCase().includes(termo) ||
+    item.descricao.toLowerCase().includes(termo)
+  );
+
+  paginaAtual = 1;
+  mostrar();
+});
+
+// =========================
+// Inicialização
+// =========================
+carregarLocal();
+dadosFiltrados = [...dados];
+mostrar();
+
+</script>
+
+</body>
+</html>

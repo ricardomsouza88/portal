@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "titulo": "HTML Básico",
+    "descricao": "Aprenda estrutura de sites",
+    "conteudo": "HTML é a linguagem usada para criar páginas web. Ela define a estrutura do conteúdo, como títulos, parágrafos, listas, imagens e links."
+  },
+  {
+    "id": 2,
+    "titulo": "JavaScript",
+    "descricao": "Programação para web",
+    "conteudo": "JavaScript permite adicionar interatividade aos sites. Você pode manipular elementos, responder a cliques, validar formulários e muito mais."
+  },
+  {
+    "id": 3,
+    "titulo": "CSS",
+    "descricao": "Estilizando páginas",
+    "conteudo": "CSS é usado para definir o estilo das páginas web, como cores, fontes, tamanhos e layouts. Ele separa o conteúdo da apresentação visual."
+  }
+]
