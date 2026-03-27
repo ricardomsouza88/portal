@@ -42,16 +42,20 @@
 
 <script>
   // =============================
-  // Adicione seus tópicos aqui
+  // Dados (PDF ou URL)
   // =============================
   const dados = [
-    { titulo: "Erro ao Carregar o sistema", descricao: "Erro durante o carregamento do sistema. A aplicação ‘spjclienteapp.exe’ está bloqueada por outra aplicação e não é possível realizar a atualização.", arquivo: "pdfs/Erro ao carregar o sistema.pdf" },
-    { titulo: "Erro parte padrão", descricao: "Não é possível revisar o processo pois possui campos ainda com valor padrão de cadastro automático", arquivo: "pdfs/Erro parte passiva padrão.pdf" },
-    { titulo: "Rito não informado", descricao: "O processo não pode ser revisado pois o rito não foi definido", arquivo: "pdfs/Erro rito não informado.pdf" },
-    { titulo: "Aviso já respondido", descricao: "O serviço do MNI do Tribunal remoto retornou o erro: O expediente com ID “xxxxxx” já foi respondido.", arquivo: "pdfs/Aviso já respondido.pdf" },
-    { titulo: "Erro no ajuizamento, dados truncados", descricao: "Erro no acesso a base de dados; detalhes; dados de cadeia ou binários seriam truncados.", arquivo: "pdfs/Erro dados truncados..pdf" },
-    { titulo: "Como encaminhar o chamado para o time Apolo.", descricao: "Em alguns casos é necessário encaminhar o chamado para análise do time apolo, para isto...", arquivo: "pdfs/Chamado time apolo.pdf" },
-    { titulo: "A Rotina do sistema atualizou as informações da pendência após o recebimento do Procurador", descricao: "Após o Procurador receber e encaminhar a pendência, o sistema atualizou as informações de classificação e prazo", arquivo: "pdfs/pendencia antecipada.pdf" },
+    { titulo: "Erro ao Carregar o sistema", descricao: "Erro durante o carregamento do sistema.", arquivo: "pdfs/Erro ao carregar o sistema.pdf" },
+    { titulo: "Erro parte padrão", descricao: "Campos com valor padrão automático.", arquivo: "pdfs/Erro parte passiva padrão.pdf" },
+    { titulo: "Rito não informado", descricao: "O rito não foi definido.", arquivo: "pdfs/Erro rito não informado.pdf" },
+    { titulo: "Aviso já respondido", descricao: "Expediente já respondido.", arquivo: "pdfs/Aviso já respondido.pdf" },
+    { titulo: "Erro dados truncados", descricao: "Erro de dados binários truncados.", arquivo: "pdfs/Erro dados truncados..pdf" },
+    
+    // Exemplo com URL
+    { titulo: "Abrir site externo", descricao: "Exemplo abrindo um link", url: "https://www.google.com" },
+
+    { titulo: "Chamado Apolo", descricao: "Encaminhamento para time Apolo.", arquivo: "pdfs/Chamado time apolo.pdf" },
+    { titulo: "Pendência antecipada", descricao: "Atualização automática de pendência.", arquivo: "pdfs/pendencia antecipada.pdf" },
     { titulo: "PDF Extra 4", descricao: "Exemplo extra", arquivo: "pdfs/extra4.pdf" },
     { titulo: "PDF Extra 5", descricao: "Exemplo extra", arquivo: "pdfs/extra5.pdf" },
     { titulo: "PDF Extra 6", descricao: "Exemplo extra", arquivo: "pdfs/extra6.pdf" }
@@ -64,6 +68,19 @@
   let paginaAtual = 1;
   let dadosFiltrados = [...dados];
 
+  // =============================
+  // Função para abrir PDF ou URL
+  // =============================
+  function abrirConteudo(item) {
+    const destino = item.url || item.arquivo;
+
+    if (destino) {
+      window.open(destino, "_blank");
+    } else {
+      alert("Nenhum conteúdo disponível.");
+    }
+  }
+
   function mostrarTopicos() {
     lista.innerHTML = "";
     const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -73,14 +90,21 @@
     paginaItens.forEach(item => {
       const div = document.createElement("div");
       div.className = "card";
-      div.innerHTML = `<h3>${item.titulo}</h3><p>${item.descricao}</p>`;
-      div.onclick = () => window.open(item.arquivo, "_blank");
+
+      div.innerHTML = `
+        <h3>${item.titulo}</h3>
+        <p>${item.descricao}</p>
+      `;
+
+      div.onclick = () => abrirConteudo(item);
+
       lista.appendChild(div);
     });
 
     // Paginação
     const totalPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
     paginationDiv.innerHTML = "";
+
     for(let i = 1; i <= totalPaginas; i++) {
       const btn = document.createElement("span");
       btn.className = "page-btn" + (i === paginaAtual ? " active" : "");
@@ -89,16 +113,20 @@
       paginationDiv.appendChild(btn);
     }
 
-    if(paginaItens.length === 0) lista.innerHTML = "<p>Nenhum tópico encontrado.</p>";
+    if(paginaItens.length === 0) {
+      lista.innerHTML = "<p>Nenhum tópico encontrado.</p>";
+    }
   }
 
   // Busca em tempo real
   inputBusca.addEventListener("input", (e) => {
     const filtro = e.target.value.toLowerCase();
+
     dadosFiltrados = dados.filter(item => 
       item.titulo.toLowerCase().includes(filtro) ||
       item.descricao.toLowerCase().includes(filtro)
     );
+
     paginaAtual = 1;
     mostrarTopicos();
   });
