@@ -3,16 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <title>Portal de Ajuda SAJ</title>
+
   <style>
-    body { font-family: Arial; background: #f5f5f5; text-align: center; padding: 30px; }
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      text-align: center;
+      padding: 30px;
+    }
+
     h1 { margin-bottom: 20px; }
 
-    #busca {
-      padding: 10px;
-      width: 500px;
+    /* TOPO (BUSCA + BOTÃO) */
+    .topo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 20px;
+    }
+
+    .topo input {
+      padding: 10px;
+      width: 400px;
       border-radius: 5px;
       border: 1px solid #ccc;
+    }
+
+    .topo button {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background: #007bff;
+      color: white;
+    }
+
+    .topo button:hover {
+      background: #0056b3;
     }
 
     .card {
@@ -57,23 +85,20 @@
       margin: 10px 0;
       padding: 8px;
     }
-
-    button {
-      padding: 10px 15px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
   </style>
 </head>
+
 <body>
 
 <h1>🖥️ Inconsistências</h1>
 
-<input type="text" id="busca" placeholder="🔍 Pesquise um assunto...">
+<!-- TOPO -->
+<div class="topo">
+  <input type="text" id="busca" placeholder="🔍 Pesquise um assunto...">
+  <button onclick="toggleForm()">➕ Adicionar</button>
+</div>
 
-<br>
-<button onclick="toggleForm()">➕ Adicionar Conteúdo</button>
-
+<!-- FORM -->
 <div id="formContainer">
   <h3>Novo Conteúdo</h3>
   <input type="text" id="tituloInput" placeholder="Título"><br>
@@ -87,7 +112,16 @@
 
 <script>
   const dados = [
-    { titulo: "Erro ao Carregar o sistema", descricao: "Erro durante o carregamento...", arquivo: "pdfs/Erro ao carregar o sistema.pdf" }
+    {
+      titulo: "Erro ao Carregar o sistema",
+      descricao: "Erro durante o carregamento do sistema.",
+      arquivo: "pdfs/Erro ao carregar o sistema.pdf"
+    },
+    {
+      titulo: "Rito não informado",
+      descricao: "O processo não pode ser revisado pois o rito não foi definido.",
+      arquivo: "pdfs/Erro rito não informado.pdf"
+    }
   ];
 
   const lista = document.getElementById("lista");
@@ -114,7 +148,7 @@
     }
 
     const file = arquivoInput.files[0];
-    const url = URL.createObjectURL(file); // cria link temporário
+    const url = URL.createObjectURL(file);
 
     dados.push({
       titulo: titulo,
@@ -125,7 +159,6 @@
     dadosFiltrados = [...dados];
     mostrarTopicos();
 
-    // limpar campos
     document.getElementById("tituloInput").value = "";
     document.getElementById("descricaoInput").value = "";
     arquivoInput.value = "";
@@ -135,6 +168,7 @@
 
   function abrirConteudo(item) {
     const destino = item.url || item.arquivo;
+
     if (destino) {
       window.open(destino, "_blank");
     } else {
@@ -169,11 +203,14 @@
       const btn = document.createElement("span");
       btn.className = "page-btn" + (i === paginaAtual ? " active" : "");
       btn.innerText = i;
-      btn.onclick = () => { paginaAtual = i; mostrarTopicos(); };
+      btn.onclick = () => {
+        paginaAtual = i;
+        mostrarTopicos();
+      };
       paginationDiv.appendChild(btn);
     }
 
-    if(paginaItens.length === 0) {
+    if (paginaItens.length === 0) {
       lista.innerHTML = "<p>Nenhum tópico encontrado.</p>";
     }
   }
@@ -181,7 +218,7 @@
   inputBusca.addEventListener("input", (e) => {
     const filtro = e.target.value.toLowerCase();
 
-    dadosFiltrados = dados.filter(item => 
+    dadosFiltrados = dados.filter(item =>
       item.titulo.toLowerCase().includes(filtro) ||
       item.descricao.toLowerCase().includes(filtro)
     );
