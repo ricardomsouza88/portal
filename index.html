@@ -1,169 +1,245 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Portal de Ajuda SAJ - Avançado</title>
-<style>
-body { font-family: Arial; background: #f5f5f5; text-align: center; padding: 30px; }
-.topo { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-input, textarea { padding: 10px; width: 300px; }
-button { padding: 8px 12px; cursor: pointer; margin: 2px; }
-.card { background: #fff; padding: 15px; margin: 10px auto; max-width: 600px; border-radius: 10px; text-align: left; }
-#formContainer { display: none; background: #fff; padding: 20px; margin: 20px auto; max-width: 500px; }
-.pagination { margin-top: 20px; }
-.page-btn { cursor: pointer; padding: 5px 10px; margin: 0 3px; border: 1px solid #ccc; border-radius: 5px; }
-.page-btn.active { background: #ddd; }
-</style>
+  <meta charset="UTF-8">
+  <title>Portal de Ajuda SAJ</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      text-align: center;
+      padding: 30px;
+    }
+
+    h1 { margin-bottom: 20px; }
+
+    /* TOPO (BUSCA + BOTÃO) */
+    .topo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .topo input {
+      padding: 10px;
+      width: 400px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .topo button {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background: #007bff;
+      color: white;
+    }
+
+    .topo button:hover {
+      background: #0056b3;
+    }
+
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin: 10px auto;
+      max-width: 700px;
+      cursor: pointer;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: 0.3s;
+    }
+
+    .card:hover { background: #eaeaea; }
+
+    .pagination { margin-top: 20px; }
+
+    .page-btn {
+      cursor: pointer;
+      padding: 8px 12px;
+      margin: 0 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+
+    .page-btn.active { background: #ddd; }
+
+    /* FORMULÁRIO */
+    #formContainer {
+      display: none;
+      background: #fff;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 600px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    input, textarea {
+      width: 90%;
+      margin: 10px 0;
+      padding: 8px;
+    }
+  </style>
 </head>
+
 <body>
 
 <h1>🖥️ Inconsistências</h1>
 
+<!-- TOPO -->
 <div class="topo">
-  <input type="text" id="busca" placeholder="Buscar...">
+  <input type="text" id="busca" placeholder="🔍 Pesquise um assunto...">
   <button onclick="toggleForm()">➕ Adicionar</button>
 </div>
 
+<!-- FORM -->
 <div id="formContainer">
   <h3>Novo Conteúdo</h3>
   <input type="text" id="tituloInput" placeholder="Título"><br>
   <textarea id="descricaoInput" placeholder="Descrição"></textarea><br>
-  <input type="text" id="linkInput" placeholder="Link do PDF (OneDrive)"><br><br>
+  <input type="file" id="arquivoInput" accept="application/pdf"><br>
   <button onclick="adicionarConteudo()">Salvar</button>
 </div>
 
 <div id="lista"></div>
 <div class="pagination" id="pagination"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script>
+   // =============================
+  // Dados (PDF ou URL)
+  // =============================
+  const dados = [
+    { titulo: "Erro ao Carregar o sistema", descricao: "Erro durante o carregamento do sistema. A aplicação ‘spjclienteapp.exe’ está bloqueada por outra aplicação e não é possível realizar a atualização.", arquivo: "pdfs/Erro ao carregar o sistema.pdf" },
+    { titulo: "Erro parte padrão", descricao: "Não é possível revisar o processo pois possui campos ainda com valor padrão de cadastro automático.", arquivo: "pdfs/Erro parte passiva padrão.pdf" },
+    { titulo: "Rito não informado", descricao: "O processo não pode ser revisado pois o rito não foi definido.", arquivo: "pdfs/Erro rito não informado.pdf" },
+    { titulo: "Aviso já respondido", descricao: "O serviço do MNI do Tribunal remoto retornou o erro: O expediente com ID “xxxxxx” já foi respondido.", arquivo: "pdfs/Aviso já respondido.pdf" },
+    { titulo: "Erro no ajuizamento, dados truncados", descricao: "Erro no acesso a base de dados; detalhes; dados de cadeia ou binários seriam truncados.", arquivo: "pdfs/Erro dados truncados..pdf" },
+    
+    // Exemplo com URL
+    { titulo: "Tabela de erros conhecidos PJE", descricao: "Tabela de códigos de erros conhecidos no PJE", url: "https://pje.csjt.jus.br/manual/index.php/Tabela_de_erros_conhecidos" },
 
-/* 🔴 CONFIGURAÇÃO FIREBASE */
-const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID",
-  appId: "SUA_APP_ID"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    { titulo: "Como encaminhar o chamado para o time Apolo", descricao: "Em alguns casos é necessário encaminhar o chamado para análise do time apolo, para isto...", arquivo: "pdfs/Chamado time apolo.pdf" },
+    { titulo: "Pendência atualizada após o recebimento", descricao: "Após o Procurador receber e encaminhar a pendência, o sistema atualizou as informações de classificação e prazo.", arquivo: "pdfs/pendencia antecipada.pdf" },
+    { titulo: "Como desabilitar a configuração do Scanner", descricao: "Em alguns casos, ao importar documentos para o processo, o sistema tenta primeiro buscar documentos no Scanner...", arquivo: "pdfs/Desabilitar scanner.pdf" },
+    { titulo: "Como excluir um processo incidente", descricao: "Em alguns casos o cliente pode notar a necessidade de excluir um processo incidente e cadastrá-lo separadamente...", arquivo: "pdfs/excluir incidente.pdf" },
+   ];
 
-let dados = [];
-const lista = document.getElementById("lista");
-const busca = document.getElementById("busca");
-const paginationDiv = document.getElementById("pagination");
-const itensPorPagina = 5;
-let paginaAtual = 1;
+  const lista = document.getElementById("lista");
+  const inputBusca = document.getElementById("busca");
+  const paginationDiv = document.getElementById("pagination");
 
-/* Mostrar cards com paginação */
-function mostrarCards(array = dados) {
-  lista.innerHTML = "";
-  const inicio = (paginaAtual - 1) * itensPorPagina;
-  const fim = inicio + itensPorPagina;
-  const paginaItens = array.slice(inicio, fim);
+  const itensPorPagina = 8;
+  let paginaAtual = 1;
+  let dadosFiltrados = [...dados];
 
-  if(paginaItens.length === 0){
-    lista.innerHTML = "<p>Nenhum tópico encontrado.</p>";
-    paginationDiv.innerHTML = "";
-    return;
-  }
-
-  paginaItens.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <h3>${item.titulo}</h3>
-      <p>${item.descricao}</p>
-      <button onclick="window.open('${item.link}','_blank')">Abrir PDF</button>
-      <button onclick="copiarLink('${item.link}')">Copiar Link</button>
-      <button onclick="editarConteudo('${item.id}')">Editar</button>
-      <button onclick="excluirConteudo('${item.id}')">Excluir</button>
-    `;
-    lista.appendChild(div);
-  });
-
-  /* Paginação */
-  const totalPaginas = Math.ceil(array.length / itensPorPagina);
-  paginationDiv.innerHTML = "";
-  for(let i=1;i<=totalPaginas;i++){
-    const btn = document.createElement("span");
-    btn.className = "page-btn" + (i===paginaAtual?" active":"");
-    btn.innerText = i;
-    btn.onclick = ()=> { paginaAtual=i; mostrarCards(array); };
-    paginationDiv.appendChild(btn);
-  }
-}
-
-/* Copiar link para área de transferência */
-window.copiarLink = function(link){
-  navigator.clipboard.writeText(link).then(()=>alert("Link copiado!"));
-}
-
-/* Filtrar busca */
-busca.addEventListener("input", ()=>{
-  const filtro = busca.value.toLowerCase();
-  const filtrados = dados.filter(item=>
-    item.titulo.toLowerCase().includes(filtro) ||
-    item.descricao.toLowerCase().includes(filtro)
-  );
-  paginaAtual = 1;
-  mostrarCards(filtrados);
-});
-
-/* Carregar dados do Firestore */
-async function carregarDados(){
-  const snapshot = await getDocs(collection(db,"conteudos"));
-  dados = [];
-  snapshot.forEach(docSnap=>{
-    dados.push({...docSnap.data(), id: docSnap.id});
-  });
-  mostrarCards(dados);
-}
-
-/* Adicionar novo conteúdo */
-window.adicionarConteudo = async function(){
-  const titulo = document.getElementById("tituloInput").value;
-  const descricao = document.getElementById("descricaoInput").value;
-  const link = document.getElementById("linkInput").value;
-
-  if(!titulo||!descricao||!link){ alert("Preencha todos os campos!"); return; }
-
-  await addDoc(collection(db,"conteudos"), {titulo,descricao,link});
-  alert("Salvo com sucesso!");
-  location.reload();
-}
-
-/* Excluir conteúdo */
-window.excluirConteudo = async function(id){
-  if(confirm("Deseja realmente excluir este conteúdo?")){
-    await deleteDoc(doc(db,"conteudos",id));
-    carregarDados();
-  }
-}
-
-/* Editar conteúdo */
-window.editarConteudo = async function(id){
-  const item = dados.find(d=>d.id===id);
-  if(!item) return;
-
-  const novoTitulo = prompt("Novo título:", item.titulo);
-  const novaDescricao = prompt("Nova descrição:", item.descricao);
-  const novoLink = prompt("Novo link PDF:", item.link);
-
-  if(novoTitulo && novaDescricao && novoLink){
-    await updateDoc(doc(db,"conteudos",id), {titulo:novoTitulo, descricao:novaDescricao, link:novoLink});
-    carregarDados();
-  }
-}
-
-/* Mostrar/ocultar formulário */
-window.toggleForm = function(){
+ function toggleForm() {
   const form = document.getElementById("formContainer");
-  form.style.display = form.style.display==="none"?"block":"none";
+
+  if (form.style.display === "none" || form.style.display === "") {
+    form.style.display = "block";
+  } else {
+    form.style.display = "none";
+  }
 }
 
-carregarDados();
+  function adicionarConteudo() {
+    const titulo = document.getElementById("tituloInput").value;
+    const descricao = document.getElementById("descricaoInput").value;
+    const arquivoInput = document.getElementById("arquivoInput");
+
+    if (!titulo || !descricao || !arquivoInput.files[0]) {
+      alert("Preencha todos os campos!");
+      return;
+    }
+
+    const file = arquivoInput.files[0];
+    const url = URL.createObjectURL(file);
+
+    dados.push({
+      titulo: titulo,
+      descricao: descricao,
+      arquivo: url
+    });
+
+    dadosFiltrados = [...dados];
+    mostrarTopicos();
+
+    document.getElementById("tituloInput").value = "";
+    document.getElementById("descricaoInput").value = "";
+    arquivoInput.value = "";
+
+    toggleForm();
+  }
+
+  function abrirConteudo(item) {
+    const destino = item.url || item.arquivo;
+
+    if (destino) {
+      window.open(destino, "_blank");
+    } else {
+      alert("Nenhum conteúdo disponível.");
+    }
+  }
+
+  function mostrarTopicos() {
+    lista.innerHTML = "";
+
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const paginaItens = dadosFiltrados.slice(inicio, fim);
+
+    paginaItens.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "card";
+
+      div.innerHTML = `
+        <h3>${item.titulo}</h3>
+        <p>${item.descricao}</p>
+      `;
+
+      div.onclick = () => abrirConteudo(item);
+      lista.appendChild(div);
+    });
+
+    const totalPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
+    paginationDiv.innerHTML = "";
+
+    for(let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("span");
+      btn.className = "page-btn" + (i === paginaAtual ? " active" : "");
+      btn.innerText = i;
+      btn.onclick = () => {
+        paginaAtual = i;
+        mostrarTopicos();
+      };
+      paginationDiv.appendChild(btn);
+    }
+
+    if (paginaItens.length === 0) {
+      lista.innerHTML = "<p>Nenhum tópico encontrado.</p>";
+    }
+  }
+
+  inputBusca.addEventListener("input", (e) => {
+    const filtro = e.target.value.toLowerCase();
+
+    dadosFiltrados = dados.filter(item =>
+      item.titulo.toLowerCase().includes(filtro) ||
+      item.descricao.toLowerCase().includes(filtro)
+    );
+
+    paginaAtual = 1;
+    mostrarTopicos();
+  });
+
+  mostrarTopicos();
 </script>
+
 </body>
 </html>
